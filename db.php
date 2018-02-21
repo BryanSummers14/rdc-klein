@@ -1,10 +1,6 @@
 <?php
 
-require_once './configs.php';
-
-$host = '127.0.0.1';
-$db   = 'addresses';
-$charset = 'utf8';
+require_once __DIR__ . 'configs.php';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $opt = [
