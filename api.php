@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 require_once __DIR__ . 'configs.php';
@@ -15,31 +16,20 @@ $klein->respond(function ($request, $response, $service, $app) use ($klein) {
     $app->db = new PDO($dsn, $db_username, $db_password, $opt);
 
 });
-// Remove this (just for reference)
-$klein->respond('POST', '/users/[i:id]/edit', function ($request, $response, $service, $app) {
-    // Quickly validate input parameters
-    $service->validateParam('username', 'Please enter a valid username')->isLen(5, 64)->isChars('a-zA-Z0-9-');
-    $service->validateParam('password')->notNull();
 
-    $app->db->query(); // etc.
-
-    // Add view properties and helper methods
-    $service->title = 'foo';
-    $service->escape = function ($str) {
-        return htmlentities($str); // Assign view helpers
-    };
-
-    $service->render('myview.html');
-});
-
-$klein->respond('GET', '/addresses', function($request, $response) {
+$klein->respond('GET', '/addresses', function($request, $response, $service, $app) {
 
     $db_results = $app->db->query('SELECT * FROM addresses');
     return $response->json($db_results);
 
 });
 
-$klein->respond('POST', '/address', function($request, $response) {
+$klein->respond('POST', '/address', function($request, $response, $service, $app) {
+
+    $service->validateParam('street')->notNull();
+    $service->validateParam('city')->notNull();
+    $service->validateParam('state')->notNull();
+    $service->validateParam('zip')->notNull();
 
     $street = $request->param('street');
     $city = $request->param('city');
@@ -52,12 +42,26 @@ $klein->respond('POST', '/address', function($request, $response) {
 
 });
 
-$klein->respond('GET', '/addresses/[:zip]', function($request, $response) {
+$klein->respond('GET', '/addresses/[:name]', function($request, $response, $service, $app) {
+
+        $service->validateParam('street')->notNull()->isChars('a-zA-Z');
+
+        $name = $request->name;
+    
+        $stmnt = $app->db->prepare("SELECT * FROM addresses where street LIKE ?");
+        $db_results = $stmnt->execute([$name]);
+        return $response->json($db_results);
+    
+});
+
+$klein->respond('GET', '/addresses/[:zip]', function($request, $response, $service, $app) {
 
     $stmnt = $app->db->prepare("SELECT * FROM addresses where zip=?");
-    $db_results = $stmnt->execute($request->zip);
+    $db_results = $stmnt->execute([$request->zip]);
     return $response->json($db_results);
 
 });
+
+
 
 $klein->dispatch();
