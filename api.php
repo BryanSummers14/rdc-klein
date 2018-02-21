@@ -12,7 +12,7 @@ $klein->respond(function ($request, $response, $service, $app) use ($klein) {
         $klein->service()->flash($err_msg);
         $klein->service()->back();
     });
-
+    // Global db setup, used in every call
     $app->db = new PDO($dsn, $db_username, $db_password, $opt);
 
 });
@@ -22,6 +22,16 @@ $klein->respond('GET', '/addresses', function($request, $response, $service, $ap
     $db_results = $app->db->query('SELECT * FROM addresses');
     return $response->json($db_results);
 
+});
+
+$klein->respond('GET', '/address', function($request, $response, $service, $app) {
+    
+    $id = $request->param('id');
+    
+    $stmnt = $app->db->prepare("SELECT * from addresses where address_id=?");
+    $db_results = $stmnt->execute([$id]);
+    return $response->json($db_results);
+    
 });
 
 $klein->respond('POST', '/address', function($request, $response, $service, $app) {
@@ -36,7 +46,7 @@ $klein->respond('POST', '/address', function($request, $response, $service, $app
     $state = $request->param('state');
     $zip = $request->param('zip');
 
-    $stmnt = $app->db->prepare("INSERT INTO addresses VALUES (?, ?, ?, ?");
+    $stmnt = $app->db->prepare("INSERT INTO addresses (street, city, state, zip) VALUES (?, ?, ?, ?)");
     $db_results = $stmnt->execute([$street, $city, $state, $zip]);
     return $response->json($db_results);
 
@@ -44,13 +54,11 @@ $klein->respond('POST', '/address', function($request, $response, $service, $app
 
 $klein->respond('GET', '/addresses/[:name]', function($request, $response, $service, $app) {
 
-        $service->validateParam('street')->notNull()->isChars('a-zA-Z');
-
-        $name = $request->name;
+    $name = $request->name;
     
-        $stmnt = $app->db->prepare("SELECT * FROM addresses where street LIKE ?");
-        $db_results = $stmnt->execute([$name]);
-        return $response->json($db_results);
+    $stmnt = $app->db->prepare("SELECT * FROM addresses where street LIKE ?");
+    $db_results = $stmnt->execute(['%'.$name.'%']);
+    return $response->json($db_results);
     
 });
 
@@ -61,7 +69,6 @@ $klein->respond('GET', '/addresses/[:zip]', function($request, $response, $servi
     return $response->json($db_results);
 
 });
-
 
 
 $klein->dispatch();
