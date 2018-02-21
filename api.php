@@ -6,6 +6,9 @@ require_once __DIR__ . 'configs.php';
 
 $klein = new \Klein\Klein();
 
+//================
+// Global Setup
+//================
 $klein->respond(function ($request, $response, $service, $app) use ($klein) {
     // Handle exceptions => flash the message and redirect to the referrer
     $klein->onError(function ($klein, $err_msg) {
@@ -17,6 +20,7 @@ $klein->respond(function ($request, $response, $service, $app) use ($klein) {
 
 });
 
+// Get all addresses
 $klein->respond('GET', '/addresses', function($request, $response, $service, $app) {
 
     $db_results = $app->db->query('SELECT * FROM addresses');
@@ -24,6 +28,7 @@ $klein->respond('GET', '/addresses', function($request, $response, $service, $ap
 
 });
 
+// Get address by id
 $klein->respond('GET', '/address', function($request, $response, $service, $app) {
     
     $id = $request->param('id');
@@ -34,6 +39,7 @@ $klein->respond('GET', '/address', function($request, $response, $service, $app)
     
 });
 
+// Add new address
 $klein->respond('POST', '/address', function($request, $response, $service, $app) {
 
     $service->validateParam('street')->notNull();
@@ -52,6 +58,7 @@ $klein->respond('POST', '/address', function($request, $response, $service, $app
 
 });
 
+// Get address by name?
 $klein->respond('GET', '/addresses/[:name]', function($request, $response, $service, $app) {
 
     $name = $request->name;
@@ -62,6 +69,7 @@ $klein->respond('GET', '/addresses/[:name]', function($request, $response, $serv
     
 });
 
+// Get address by zip
 $klein->respond('GET', '/addresses/[:zip]', function($request, $response, $service, $app) {
 
     $stmnt = $app->db->prepare("SELECT * FROM addresses where zip=?");
